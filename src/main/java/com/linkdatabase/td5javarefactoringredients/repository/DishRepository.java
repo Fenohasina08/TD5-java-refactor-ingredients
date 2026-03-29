@@ -11,7 +11,7 @@ public class DishRepository {
 
     public List<Dish> findAllWithIngredients() {
         List<Dish> dishes = new ArrayList<>();
-        String sql = "SELECT id, name, dish_type, selling_price FROM dish";
+        String sql = "SELECT id, name,  selling_price FROM dish";
         try (Connection conn = DataSource.getConnection();
              Statement st = conn.createStatement();
              ResultSet rs = st.executeQuery(sql)) {
@@ -19,7 +19,6 @@ public class DishRepository {
                 Dish dish = new Dish();
                 dish.setId(rs.getInt("id"));
                 dish.setName(rs.getString("name"));
-                dish.setDishType(DishTypeEnum.valueOf(rs.getString("dish_type")));
                 dish.setPrice(rs.getDouble("selling_price"));
                 dish.setDishIngredients(findIngredientsByDishId(conn, dish.getId()));
                 dishes.add(dish);

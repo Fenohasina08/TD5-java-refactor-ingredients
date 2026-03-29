@@ -2,7 +2,9 @@ package com.linkdatabase.td5javarefactoringredients.controller;
 
 import com.linkdatabase.td5javarefactoringredients.entity.Dish;
 import com.linkdatabase.td5javarefactoringredients.entity.Ingredient;
+import com.linkdatabase.td5javarefactoringredients.exception.NotFoundException;
 import com.linkdatabase.td5javarefactoringredients.repository.DishRepository;
+import org.apache.coyote.BadRequestException;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
@@ -21,7 +23,7 @@ public class DishController {
     @PutMapping("/dishes/{id}/ingredients")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void updateDishIngredients(@PathVariable int id,
-                                      @RequestBody(required = false) List<Ingredient> ingredients) {
+                                      @RequestBody(required = false) List<Ingredient> ingredients) throws BadRequestException {
         if (ingredients == null) {
             throw new BadRequestException("Request body is required");
         }

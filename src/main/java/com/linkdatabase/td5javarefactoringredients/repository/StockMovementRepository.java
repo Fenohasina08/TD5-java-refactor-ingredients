@@ -9,28 +9,39 @@ import java.time.Instant;
 
 public class StockMovementRepository {
 
-    public StockValue getStockValueAt(Integer ingredientId, Instant t) {
+    public StockValue getStockValueAt(Integer ingredientId, Instant t, String unitStr) {
+        // Validation de l'unité (optionnelle mais recommandée)
+        Unit unit;
+        try {
+            unit = Unit.valueOf(unitStr.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new RuntimeException("Unité invalide : " + unitStr);
+        }
+
         String sql = """
             SELECT unit, SUM(CASE WHEN type = 'OUT' THEN -quantity ELSE quantity END) AS actual_quantity
             FROM stock_movement
-            WHERE id_ingredient = ? AND creation_datetime <= ?
+            WHERE id_ingredient = ? AND creation_datetime <= ? AND unit = ?::unit
             GROUP BY unit
         """;
         try (Connection conn = DataSource.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, ingredientId);
             ps.setTimestamp(2, Timestamp.from(t));
+            ps.setString(3, unit.name());
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
                     StockValue sv = new StockValue();
                     sv.setQuantity(rs.getDouble("actual_quantity"));
                     sv.setUnit(Unit.valueOf(rs.getString("unit")));
                     return sv;
+                } else {
+                    // Aucun mouvement avec cette unité : stock nul, unité demandée
+                    StockValue sv = new StockValue();
+                    sv.setQuantity(0.0);
+                    sv.setUnit(unit);
+                    return sv;
                 }
-                StockValue sv = new StockValue();
-                sv.setQuantity(0.0);
-                sv.setUnit(null);
-                return sv;
             }
         } catch (SQLException e) {
             throw new RuntimeException("Erreur calcul stock", e);
