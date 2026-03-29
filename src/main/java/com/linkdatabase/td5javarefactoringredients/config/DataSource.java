@@ -1,0 +1,28 @@
+package com.linkdatabase.td5javarefactoringredients.config;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+
+public class DataSource {
+    private static final String URL = "jdbc:postgresql://localhost:5432/mini_dish_db";
+    private static final String USER = "mini_dish_db_manager";
+    private static final String PASSWORD = "123456";
+
+    public static Connection getConnection() {
+        try {
+            return DriverManager.getConnection(URL, USER, PASSWORD);
+        } catch (SQLException e) {
+            throw new RuntimeException("Impossible de se connecter à la base de données", e);
+        }
+    }
+
+    public void closeConnection(Connection connection) {
+        if (connection != null) {
+            try {
+                connection.close();
+            } catch (SQLException e) {
+                throw new RuntimeException("Erreur lors de la fermeture de la connexion", e);
+            }
+        }
+    }
+}
