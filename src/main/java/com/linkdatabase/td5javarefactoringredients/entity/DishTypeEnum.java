@@ -1,4 +1,5 @@
 package com.linkdatabase.td5javarefactoringredients.entity;
 
-public class DishTypeEnum {
+public enum DishTypeEnum {
+    STARTER, MAIN_COURSE, DESSERT, DRINK
 }

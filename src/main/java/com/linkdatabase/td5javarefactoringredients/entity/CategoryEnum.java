@@ -1,4 +1,5 @@
 package com.linkdatabase.td5javarefactoringredients.entity;
 
-public class CategoryEnum {
+public enum CategoryEnum {
+    LEGUME, FRUIT, EPICE, VIANDE, POISSON, AUTRE
 }

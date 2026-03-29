@@ -1,4 +1,5 @@
 package com.linkdatabase.td5javarefactoringredients.entity;
 
-public class MovementTypeEnum {
+public enum MovementTypeEnum {
+    IN, OUT
 }
