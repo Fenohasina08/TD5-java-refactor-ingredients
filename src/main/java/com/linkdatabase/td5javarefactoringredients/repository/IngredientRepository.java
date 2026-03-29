@@ -1,4 +1,54 @@
 package com.linkdatabase.td5javarefactoringredients.repository;
 
+import com.linkdatabase.td5javarefactoringredients.config.DataSource;
+import com.linkdatabase.td5javarefactoringredients.entity.*;
+
+import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
+
 public class IngredientRepository {
+
+    public List<Ingredient> findAll() {
+        List<Ingredient> ingredients = new ArrayList<>();
+        String sql = "SELECT id, name, price, category FROM ingredient";
+        try (Connection conn = DataSource.getConnection();
+             Statement st = conn.createStatement();
+             ResultSet rs = st.executeQuery(sql)) {
+            while (rs.next()) {
+                ingredients.add(new Ingredient(
+                        rs.getInt("id"),
+                        rs.getString("name"),
+                        CategoryEnum.valueOf(rs.getString("category")),
+                        rs.getDouble("price"),
+                        null
+                ));
+            }
+            return ingredients;
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur findAll ingredients", e);
+        }
+    }
+
+    public Ingredient findById(Integer id) {
+        String sql = "SELECT id, name, price, category FROM ingredient WHERE id = ?";
+        try (Connection conn = DataSource.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, id);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return new Ingredient(
+                            rs.getInt("id"),
+                            rs.getString("name"),
+                            CategoryEnum.valueOf(rs.getString("category")),
+                            rs.getDouble("price"),
+                            null
+                    );
+                }
+                return null;
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur findById ingredient", e);
+        }
+    }
 }
