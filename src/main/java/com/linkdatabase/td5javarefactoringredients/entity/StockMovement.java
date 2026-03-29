@@ -1,6 +1,14 @@
 package com.linkdatabase.td5javarefactoringredients.entity;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
 import java.time.Instant;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 
 public class StockMovement {
     private Integer id;
@@ -8,5 +16,4 @@ public class StockMovement {
     private StockValue value;
     private Instant creationDatetime;
 
-    // getters/setters
 }

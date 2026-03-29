@@ -10,8 +10,7 @@ import java.time.Instant;
 public class StockMovementRepository {
 
     public StockValue getStockValueAt(Integer ingredientId, Instant t, String unitStr) {
-        // Validation de l'unité (optionnelle mais recommandée)
-        Unit unit;
+         Unit unit;
         try {
             unit = Unit.valueOf(unitStr.toUpperCase());
         } catch (IllegalArgumentException e) {
@@ -19,11 +18,13 @@ public class StockMovementRepository {
         }
 
         String sql = """
-            SELECT unit, SUM(CASE WHEN type = 'OUT' THEN -quantity ELSE quantity END) AS actual_quantity
-            FROM stock_movement
-            WHERE id_ingredient = ? AND creation_datetime <= ? AND unit = ?::unit
-            GROUP BY unit
-        """;
+    SELECT unit, SUM(CASE WHEN type = 'OUT' THEN -quantity ELSE quantity END) AS actual_quantity
+    FROM stock_movement
+    WHERE id_ingredient = ? 
+      AND creation_datetime <= ? 
+      AND unit = CAST(? AS unit_type)
+    GROUP BY unit
+""";
         try (Connection conn = DataSource.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, ingredientId);
@@ -36,8 +37,7 @@ public class StockMovementRepository {
                     sv.setUnit(Unit.valueOf(rs.getString("unit")));
                     return sv;
                 } else {
-                    // Aucun mouvement avec cette unité : stock nul, unité demandée
-                    StockValue sv = new StockValue();
+                     StockValue sv = new StockValue();
                     sv.setQuantity(0.0);
                     sv.setUnit(unit);
                     return sv;
