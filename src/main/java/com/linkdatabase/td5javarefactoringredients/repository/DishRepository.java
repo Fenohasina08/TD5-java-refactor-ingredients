@@ -82,13 +82,11 @@ public class DishRepository {
     public void updateIngredients(Integer dishId, List<Ingredient> ingredients) {
         try (Connection conn = DataSource.getConnection()) {
             conn.setAutoCommit(false);
-            // Supprimer les anciennes associations
-            try (PreparedStatement ps = conn.prepareStatement("DELETE FROM dish_ingredient WHERE id_dish = ?")) {
+             try (PreparedStatement ps = conn.prepareStatement("DELETE FROM dish_ingredient WHERE id_dish = ?")) {
                 ps.setInt(1, dishId);
                 ps.executeUpdate();
             }
-            // Insérer les nouvelles (uniquement les ingrédients existants)
-            String insertSql = "INSERT INTO dish_ingredient (id, id_ingredient, id_dish, required_quantity, unit) VALUES (?, ?, ?, ?, ?::unit)";
+             String insertSql = "INSERT INTO dish_ingredient (id, id_ingredient, id_dish, required_quantity, unit) VALUES (?, ?, ?, ?, ?::unit)";
             try (PreparedStatement ps = conn.prepareStatement(insertSql)) {
                 for (Ingredient ing : ingredients) {
                     if (ingredientExists(conn, ing.getId())) {
