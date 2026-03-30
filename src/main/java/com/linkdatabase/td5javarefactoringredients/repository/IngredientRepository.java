@@ -11,10 +11,16 @@ import java.util.List;
 @Repository
 public class IngredientRepository {
 
+    private final DataSource dataSource;
+
+    public IngredientRepository(DataSource dataSource) {
+        this.dataSource = dataSource;
+    }
+
     public List<Ingredient> findAll() {
         List<Ingredient> ingredients = new ArrayList<>();
         String sql = "SELECT id, name, price, category FROM ingredient";
-        try (Connection conn = DataSource.getConnection();
+        try (Connection conn = dataSource.getConnection();
              Statement st = conn.createStatement();
              ResultSet rs = st.executeQuery(sql)) {
             while (rs.next()) {
@@ -34,7 +40,7 @@ public class IngredientRepository {
 
     public Ingredient findById(Integer id) {
         String sql = "SELECT id, name, price, category FROM ingredient WHERE id = ?";
-        try (Connection conn = DataSource.getConnection();
+        try (Connection conn = dataSource.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, id);
             try (ResultSet rs = ps.executeQuery()) {
