@@ -3,6 +3,7 @@ package com.linkdatabase.td5javarefactoringredients.repository;
 import com.linkdatabase.td5javarefactoringredients.config.DataSource;
 import com.linkdatabase.td5javarefactoringredients.entity.StockValue;
 import com.linkdatabase.td5javarefactoringredients.entity.Unit;
+import com.linkdatabase.td5javarefactoringredients.exception.BadRequestException;
 
 import java.sql.*;
 import java.time.Instant;
@@ -44,7 +45,7 @@ public class StockMovementRepository {
                 }
             }
         } catch (SQLException e) {
-            throw new RuntimeException("Erreur calcul stock", e);
+            throw new BadRequestException("Invalid unit: " + unitStr);
         }
     }
 }
