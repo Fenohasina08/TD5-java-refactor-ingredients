@@ -8,15 +8,23 @@ import org.springframework.stereotype.Repository;
 
 import java.sql.*;
 import java.time.Instant;
+
 @Repository
 public class StockMovementRepository {
 
+    private final DataSource dataSource;
+
+    public StockMovementRepository(DataSource dataSource) {
+        this.dataSource = dataSource;
+    }
+
     public StockValue getStockValueAt(Integer ingredientId, Instant t, String unitStr) {
-         Unit unit;
+        Unit unit;
         try {
             unit = Unit.valueOf(unitStr.toUpperCase());
         } catch (IllegalArgumentException e) {
-            throw new RuntimeException("Unité invalide : " + unitStr);
+            // L'unité est invalide => erreur 400
+            throw new BadRequestException("Invalid unit: " + unitStr);
         }
 
         String sql = """
@@ -27,7 +35,7 @@ public class StockMovementRepository {
                     AND unit = CAST(? AS unit_type)
                 GROUP BY unit
                 """;
-        try (Connection conn = DataSource.getConnection();
+        try (Connection conn = dataSource.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, ingredientId);
             ps.setTimestamp(2, Timestamp.from(t));
@@ -39,14 +47,14 @@ public class StockMovementRepository {
                     sv.setUnit(Unit.valueOf(rs.getString("unit")));
                     return sv;
                 } else {
-                     StockValue sv = new StockValue();
+                    StockValue sv = new StockValue();
                     sv.setQuantity(0.0);
                     sv.setUnit(unit);
                     return sv;
                 }
             }
         } catch (SQLException e) {
-            throw new BadRequestException("Invalid unit: " + unitStr);
+            throw new RuntimeException("Erreur lors du calcul du stock", e);
         }
     }
 }
