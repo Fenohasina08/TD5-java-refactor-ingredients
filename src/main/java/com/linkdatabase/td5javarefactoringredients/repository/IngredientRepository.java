@@ -2,11 +2,13 @@ package com.linkdatabase.td5javarefactoringredients.repository;
 
 import com.linkdatabase.td5javarefactoringredients.config.DataSource;
 import com.linkdatabase.td5javarefactoringredients.entity.*;
+import org.springframework.stereotype.Repository;
 
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
+@Repository
 public class IngredientRepository {
 
     public List<Ingredient> findAll() {
