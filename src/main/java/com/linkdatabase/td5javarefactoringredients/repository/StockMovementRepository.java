@@ -20,13 +20,13 @@ public class StockMovementRepository {
         }
 
         String sql = """
-    SELECT unit, SUM(CASE WHEN type = 'OUT' THEN -quantity ELSE quantity END) AS actual_quantity
-    FROM stock_movement
-    WHERE id_ingredient = ? 
-      AND creation_datetime <= ? 
-      AND unit = CAST(? AS unit_type)
-    GROUP BY unit
-""";
+                SELECT unit, SUM(CASE WHEN type = 'OUT' THEN -quantity ELSE quantity END) AS actual_quantity
+                FROM stock_movement
+                    WHERE id_ingredient = ? 
+                    AND creation_datetime <= ? 
+                    AND unit = CAST(? AS unit_type)
+                GROUP BY unit
+                """;
         try (Connection conn = DataSource.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, ingredientId);
