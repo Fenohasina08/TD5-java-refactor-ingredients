@@ -4,10 +4,11 @@ import com.linkdatabase.td5javarefactoringredients.config.DataSource;
 import com.linkdatabase.td5javarefactoringredients.entity.StockValue;
 import com.linkdatabase.td5javarefactoringredients.entity.Unit;
 import com.linkdatabase.td5javarefactoringredients.exception.BadRequestException;
+import org.springframework.stereotype.Repository;
 
 import java.sql.*;
 import java.time.Instant;
-
+@Repository
 public class StockMovementRepository {
 
     public StockValue getStockValueAt(Integer ingredientId, Instant t, String unitStr) {
