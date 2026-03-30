@@ -1,16 +1,27 @@
 package com.linkdatabase.td5javarefactoringredients.config;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 
+@Component
 public class DataSource {
-    private static final String URL = "jdbc:postgresql://localhost:5432/mini_dish_db";
-    private static final String USER = "mini_dish_db_manager";
-    private static final String PASSWORD = "123456";
 
-    public static Connection getConnection() {
+    @Value("${spring.datasource.url}")
+    private String url;
+
+    @Value("${spring.datasource.username}")
+    private String username;
+
+    @Value("${spring.datasource.password}")
+    private String password;
+
+    public Connection getConnection() {
         try {
-            return DriverManager.getConnection(URL, USER, PASSWORD);
+            return DriverManager.getConnection(url, username, password);
         } catch (SQLException e) {
             throw new RuntimeException("Impossible de se connecter à la base de données", e);
         }
