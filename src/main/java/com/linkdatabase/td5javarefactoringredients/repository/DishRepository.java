@@ -11,10 +11,17 @@ import java.util.List;
 @Repository
 public class DishRepository {
 
+    private final DataSource dataSource;
+
+    // Injection du DataSource par constructeur
+    public DishRepository(DataSource dataSource) {
+        this.dataSource = dataSource;
+    }
+
     public List<Dish> findAllWithIngredients() {
         List<Dish> dishes = new ArrayList<>();
         String sql = "SELECT id, name,  selling_price FROM dish";
-        try (Connection conn = DataSource.getConnection();
+        try (Connection conn = dataSource.getConnection();
              Statement st = conn.createStatement();
              ResultSet rs = st.executeQuery(sql)) {
             while (rs.next()) {
@@ -33,7 +40,7 @@ public class DishRepository {
 
     public Dish findById(Integer id) {
         String sql = "SELECT id, name, dish_type, selling_price FROM dish WHERE id = ?";
-        try (Connection conn = DataSource.getConnection();
+        try (Connection conn = dataSource.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, id);
             try (ResultSet rs = ps.executeQuery()) {
@@ -82,13 +89,13 @@ public class DishRepository {
     }
 
     public void updateIngredients(Integer dishId, List<Ingredient> ingredients) {
-        try (Connection conn = DataSource.getConnection()) {
+        try (Connection conn = dataSource.getConnection()) {
             conn.setAutoCommit(false);
-             try (PreparedStatement ps = conn.prepareStatement("DELETE FROM dish_ingredient WHERE id_dish = ?")) {
+            try (PreparedStatement ps = conn.prepareStatement("DELETE FROM dish_ingredient WHERE id_dish = ?")) {
                 ps.setInt(1, dishId);
                 ps.executeUpdate();
             }
-             String insertSql = "INSERT INTO dish_ingredient (id, id_ingredient, id_dish, required_quantity, unit) VALUES (?, ?, ?, ?, ?::unit)";
+            String insertSql = "INSERT INTO dish_ingredient (id, id_ingredient, id_dish, required_quantity, unit) VALUES (?, ?, ?, ?, ?::unit)";
             try (PreparedStatement ps = conn.prepareStatement(insertSql)) {
                 for (Ingredient ing : ingredients) {
                     if (ingredientExists(conn, ing.getId())) {
