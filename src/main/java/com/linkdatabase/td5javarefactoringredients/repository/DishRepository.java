@@ -13,8 +13,7 @@ public class DishRepository {
 
     private final DataSource dataSource;
 
-    // Injection du DataSource par constructeur
-    public DishRepository(DataSource dataSource) {
+     public DishRepository(DataSource dataSource) {
         this.dataSource = dataSource;
     }
 
