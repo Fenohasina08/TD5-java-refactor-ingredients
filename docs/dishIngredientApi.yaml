@@ -1,0 +1,278 @@
+openapi: 3.0.3
+info:
+  title: Dish & Ingredients Management API
+  description: RESTful API for managing ingredients, stock movements, and dishes – conversion of the console application to a web service (TD5 Refactoring).
+  version: 1.0.0
+  contact:
+    name: RA-FANOMEZANA Herimamy Fenohasina
+    email: fenohasinaherimamy@gmail.com
+
+servers:
+  - url: http://localhost:8080
+    description: Local development server
+
+paths:
+  /ingredients:
+    get:
+      summary: Retrieve all ingredients
+      description: Returns a list of all ingredients stored in the database, each containing its unique identifier, name, category, and unit price.
+      operationId: getAllIngredients
+      tags:
+        - Ingredients
+      responses:
+        '200':
+          description: Successful operation – the list of ingredients is returned.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Ingredient'
+        '500':
+          description: Internal server error.
+
+  /ingredients/{id}:
+    get:
+      summary: Retrieve an ingredient by its ID
+      description: Fetches the ingredient that matches the given identifier. If no ingredient is found, a 404 status code is returned with a plain text error message.
+      operationId: getIngredientById
+      tags:
+        - Ingredients
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Unique identifier of the ingredient.
+          schema:
+            type: integer
+          example: 1
+      responses:
+        '200':
+          description: Ingredient found – the corresponding JSON object is returned.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Ingredient'
+        '404':
+          description: Ingredient not found – the response contains a plain text message as required by the specification.
+          content:
+            text/plain:
+              schema:
+                type: string
+              example: "Ingredient.id=1 is not found"
+        '500':
+          description: Internal server error.
+
+  /ingredients/{id}/stock:
+    get:
+      summary: Retrieve the stock value of an ingredient at a given time
+      description: |
+        Calculates the stock quantity of the specified ingredient at a specific moment (ISO 8601 timestamp), expressed in the requested unit (PCS, KG, or L).
+        Both query parameters `at` and `unit` are mandatory. If any of them is missing, a 400 error is returned.
+      operationId: getIngredientStock
+      tags:
+        - Ingredients
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Identifier of the ingredient.
+          schema:
+            type: integer
+          example: 1
+        - name: at
+          in: query
+          required: true
+          description: The point in time (ISO 8601 format) for which the stock is calculated.
+          schema:
+            type: string
+            format: date-time
+          example: "2024-01-06T12:00:00Z"
+        - name: unit
+          in: query
+          required: true
+          description: The desired unit of measurement (PCS = pieces, KG = kilograms, L = liters).
+          schema:
+            type: string
+            enum: [PCS, KG, L]
+          example: "KG"
+      responses:
+        '200':
+          description: Stock value successfully computed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StockValue'
+        '400':
+          description: Missing mandatory query parameter (`at` or `unit`).
+          content:
+            text/plain:
+              schema:
+                type: string
+              example: "Either mandatory query parameter `at` or `unit` is not provided."
+        '404':
+          description: Ingredient not found.
+          content:
+            text/plain:
+              schema:
+                type: string
+              example: "Ingredient.id=1 is not found"
+        '500':
+          description: Internal server error.
+
+  /dishes:
+    get:
+      summary: Retrieve all dishes with their ingredients
+      description: Returns a list of all dishes. Each dish includes its identifier, name, selling price, and the full list of ingredients (each ingredient contains id, name, category, and price).
+      operationId: getAllDishes
+      tags:
+        - Dishes
+      responses:
+        '200':
+          description: Successful operation – the list of dishes is returned.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Dish'
+        '500':
+          description: Internal server error.
+
+  /dishes/{id}/ingredients:
+    put:
+      summary: Replace the ingredient list of a dish (attach/detach)
+      description: |
+        Completely replaces the set of ingredients associated with a dish.
+        - The request body must be a non‑empty array of objects containing only the `id` field.
+        - Any ingredient ID that does not exist in the database is silently ignored.
+        - If the dish is not found, a 404 with a plain text message is returned.
+        - On success, the updated dish (including its new ingredient list) is returned.
+      operationId: updateDishIngredients
+      tags:
+        - Dishes
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Unique identifier of the dish.
+          schema:
+            type: integer
+          example: 1
+      requestBody:
+        required: true
+        description: List of ingredient identifiers to associate with the dish.
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/IngredientRef'
+            example:
+              - id: 1
+              - id: 2
+      responses:
+        '200':
+          description: Dish successfully updated – the updated dish object is returned.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Dish'
+        '400':
+          description: Empty or missing request body.
+          content:
+            text/plain:
+              schema:
+                type: string
+              example: "Request body must not be empty"
+        '404':
+          description: Dish not found.
+          content:
+            text/plain:
+              schema:
+                type: string
+              example: "Dish.id=1 is not found"
+        '500':
+          description: Internal server error.
+
+components:
+  schemas:
+    Ingredient:
+      type: object
+      description: Represents an ingredient with its basic attributes.
+      required: [id, name, category, price]
+      properties:
+        id:
+          type: integer
+          description: Unique identifier (auto‑generated by the database).
+          example: 1
+        name:
+          type: string
+          description: Display name of the ingredient.
+          example: "Laitue"
+        category:
+          type: string
+          description: Category of the ingredient.
+          enum: [VEGETABLE, ANIMAL, MARINE, DAIRY, OTHER]
+          example: "VEGETABLE"
+        price:
+          type: number
+          format: double
+          description: Unit price in the local currency.
+          example: 800.0
+
+    IngredientRef:
+      type: object
+      description: Reference to an ingredient using only its identifier (used in PUT request body).
+      required: [id]
+      properties:
+        id:
+          type: integer
+          description: Identifier of the ingredient to attach or detach.
+          example: 1
+
+    StockValue:
+      type: object
+      description: Stock quantity expressed in a specific unit.
+      required: [unit, quantity]
+      properties:
+        unit:
+          type: string
+          description: Unit of measurement (PCS, KG, L).
+          enum: [PCS, KG, L]
+          example: "KG"
+        quantity:
+          type: number
+          format: double
+          description: Stock amount as a decimal number (can be fractional).
+          example: 4.8
+
+    Dish:
+      type: object
+      description: A dish composed of ingredients, with its selling price.
+      required: [id, name, price, ingredients]
+      properties:
+        id:
+          type: integer
+          description: Unique identifier of the dish.
+          example: 1
+        name:
+          type: string
+          description: Name of the dish.
+          example: "Salade fraîche"
+        price:
+          type: number
+          format: double
+          nullable: true
+          description: Selling price of the dish (may be null if not set).
+          example: 3500.0
+        dishType:
+          type: string
+          description: Type of dish (optional, not required by the assignment).
+          enum: [STARTER, MAIN, DESSERT]
+          example: "STARTER"
+        ingredients:
+          type: array
+          description: List of ingredients that compose the dish.
+          items:
+            $ref: '#/components/schemas/Ingredient'

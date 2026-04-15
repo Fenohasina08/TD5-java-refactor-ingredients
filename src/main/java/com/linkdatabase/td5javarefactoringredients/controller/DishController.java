@@ -5,6 +5,7 @@ import com.linkdatabase.td5javarefactoringredients.entity.Ingredient;
 import com.linkdatabase.td5javarefactoringredients.service.DishService;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -16,8 +17,31 @@ public class DishController {
     private final DishService dishService;
 
     @GetMapping("/dishes")
-    public List<Dish> getAllDishes() {
-        return dishService.findAllWithIngredients();
+    public ResponseEntity<?> getDishes() {
+        try {
+            return ResponseEntity.status(HttpStatus.OK)
+                    .body(dishService.findAll().stream()
+                            .map(dish -> new DishRest(dish.getId(),
+                                    dish.getPrice(),
+                                    dish.getName(),
+                                    dish.getDishIngredients().stream()
+                                            .map(dishIngredient ->
+                                            {
+                                                var ingredient = dishIngredient.getIngredient();
+                                                return new DishIngredientRest(ingredient.getId(), ingredient.getName(), ingredient.getCategory(), ingredient.getPrice());
+                                            }).toList()
+                            ))
+                            .toList());
+        } catch (BadRequestException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(e.getMessage());
+        } catch (NotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(e.getMessage());
+        }
     }
 
     @GetMapping("/dishes/{id}")
