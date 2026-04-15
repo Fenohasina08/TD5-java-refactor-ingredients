@@ -1,0 +1,348 @@
+openapi: 3.0.3
+info:
+  description: "RESTful API for managing ingredients, stock movements, and dishes\
+    \ – conversion of the console application to a web service (TD5 Refactoring)."
+  title: Dish & Ingredients Management API
+  version: 1.0.0
+servers:
+- description: Local development server
+  url: http://localhost:8080
+paths:
+  /ingredients:
+    get:
+      description: "Returns a list of all ingredients stored in the database, each\
+        \ containing its unique identifier, name, category, and unit price."
+      operationId: getAllIngredients
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/Ingredient'
+                type: array
+          description: Successful operation – the list of ingredients is returned.
+        "500":
+          description: Internal server error.
+      summary: Retrieve all ingredients
+      tags:
+      - Ingredients
+      x-accepts:
+      - application/json
+  /ingredients/{id}:
+    get:
+      description: "Fetches the ingredient that matches the given identifier. If no\
+        \ ingredient is found, a 404 status code is returned with a plain text error\
+        \ message."
+      operationId: getIngredientById
+      parameters:
+      - description: Unique identifier of the ingredient.
+        example: 1
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Ingredient'
+          description: Ingredient found – the corresponding JSON object is returned.
+        "404":
+          content:
+            text/plain:
+              example: Ingredient.id=1 is not found
+              schema:
+                type: string
+          description: Ingredient not found – the response contains a plain text message
+            as required by the specification.
+        "500":
+          description: Internal server error.
+      summary: Retrieve an ingredient by its ID
+      tags:
+      - Ingredients
+      x-accepts:
+      - application/json
+      - text/plain
+  /ingredients/{id}/stock:
+    get:
+      description: |
+        Calculates the stock quantity of the specified ingredient at a specific moment (ISO 8601 timestamp), expressed in the requested unit (PCS, KG, or L).
+        Both query parameters `at` and `unit` are mandatory. If any of them is missing, a 400 error is returned.
+      operationId: getIngredientStock
+      parameters:
+      - description: Identifier of the ingredient.
+        example: 1
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      - description: The point in time (ISO 8601 format) for which the stock is calculated.
+        example: 2024-01-06T12:00:00Z
+        explode: true
+        in: query
+        name: at
+        required: true
+        schema:
+          format: date-time
+          type: string
+        style: form
+      - description: "The desired unit of measurement (PCS = pieces, KG = kilograms,\
+          \ L = liters)."
+        example: KG
+        explode: true
+        in: query
+        name: unit
+        required: true
+        schema:
+          enum:
+          - PCS
+          - KG
+          - L
+          type: string
+        style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StockValue'
+          description: Stock value successfully computed.
+        "400":
+          content:
+            text/plain:
+              example: Either mandatory query parameter `at` or `unit` is not provided.
+              schema:
+                type: string
+          description: Missing mandatory query parameter (`at` or `unit`).
+        "404":
+          content:
+            text/plain:
+              example: Ingredient.id=1 is not found
+              schema:
+                type: string
+          description: Ingredient not found.
+        "500":
+          description: Internal server error.
+      summary: Retrieve the stock value of an ingredient at a given time
+      tags:
+      - Ingredients
+      x-accepts:
+      - application/json
+      - text/plain
+  /dishes:
+    get:
+      description: "Returns a list of all dishes. Each dish includes its identifier,\
+        \ name, selling price, and the full list of ingredients (each ingredient contains\
+        \ id, name, category, and price)."
+      operationId: getAllDishes
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/Dish'
+                type: array
+          description: Successful operation – the list of dishes is returned.
+        "500":
+          description: Internal server error.
+      summary: Retrieve all dishes with their ingredients
+      tags:
+      - Dishes
+      x-accepts:
+      - application/json
+  /dishes/{id}/ingredients:
+    put:
+      description: |
+        Completely replaces the set of ingredients associated with a dish.
+        - The request body must be a non‑empty array of objects containing only the `id` field.
+        - Any ingredient ID that does not exist in the database is silently ignored.
+        - If the dish is not found, a 404 with a plain text message is returned.
+        - On success, the updated dish (including its new ingredient list) is returned.
+      operationId: updateDishIngredients
+      parameters:
+      - description: Unique identifier of the dish.
+        example: 1
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            example:
+            - id: 1
+            - id: 2
+            schema:
+              items:
+                $ref: '#/components/schemas/IngredientRef'
+              type: array
+        description: List of ingredient identifiers to associate with the dish.
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Dish'
+          description: Dish successfully updated – the updated dish object is returned.
+        "400":
+          content:
+            text/plain:
+              example: Request body must not be empty
+              schema:
+                type: string
+          description: Empty or missing request body.
+        "404":
+          content:
+            text/plain:
+              example: Dish.id=1 is not found
+              schema:
+                type: string
+          description: Dish not found.
+        "500":
+          description: Internal server error.
+      summary: Replace the ingredient list of a dish (attach/detach)
+      tags:
+      - Dishes
+      x-content-type: application/json
+      x-accepts:
+      - application/json
+      - text/plain
+components:
+  schemas:
+    Ingredient:
+      description: Represents an ingredient with its basic attributes.
+      example:
+        price: 800.0
+        name: Laitue
+        id: 1
+        category: VEGETABLE
+      properties:
+        id:
+          description: Unique identifier (auto‑generated by the database).
+          example: 1
+          type: integer
+        name:
+          description: Display name of the ingredient.
+          example: Laitue
+          type: string
+        category:
+          description: Category of the ingredient.
+          enum:
+          - VEGETABLE
+          - ANIMAL
+          - MARINE
+          - DAIRY
+          - OTHER
+          example: VEGETABLE
+          type: string
+        price:
+          description: Unit price in the local currency.
+          example: 800.0
+          format: double
+          type: number
+      required:
+      - category
+      - id
+      - name
+      - price
+      type: object
+    IngredientRef:
+      description: Reference to an ingredient using only its identifier (used in PUT
+        request body).
+      example:
+        id: 1
+      properties:
+        id:
+          description: Identifier of the ingredient to attach or detach.
+          example: 1
+          type: integer
+      required:
+      - id
+      type: object
+    StockValue:
+      description: Stock quantity expressed in a specific unit.
+      example:
+        unit: KG
+        quantity: 4.8
+      properties:
+        unit:
+          description: "Unit of measurement (PCS, KG, L)."
+          enum:
+          - PCS
+          - KG
+          - L
+          example: KG
+          type: string
+        quantity:
+          description: Stock amount as a decimal number (can be fractional).
+          example: 4.8
+          format: double
+          type: number
+      required:
+      - quantity
+      - unit
+      type: object
+    Dish:
+      description: "A dish composed of ingredients, with its selling price."
+      example:
+        price: 3500.0
+        dishType: STARTER
+        name: Salade fraîche
+        ingredients:
+        - price: 800.0
+          name: Laitue
+          id: 1
+          category: VEGETABLE
+        - price: 800.0
+          name: Laitue
+          id: 1
+          category: VEGETABLE
+        id: 1
+      properties:
+        id:
+          description: Unique identifier of the dish.
+          example: 1
+          type: integer
+        name:
+          description: Name of the dish.
+          example: Salade fraîche
+          type: string
+        price:
+          description: Selling price of the dish (may be null if not set).
+          example: 3500.0
+          format: double
+          nullable: true
+          type: number
+        dishType:
+          description: "Type of dish (optional, not required by the assignment)."
+          enum:
+          - STARTER
+          - MAIN
+          - DESSERT
+          example: STARTER
+          type: string
+        ingredients:
+          description: List of ingredients that compose the dish.
+          items:
+            $ref: '#/components/schemas/Ingredient'
+          type: array
+      required:
+      - id
+      - ingredients
+      - name
+      - price
+      type: object
+

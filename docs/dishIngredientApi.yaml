@@ -3,9 +3,6 @@ info:
   title: Dish & Ingredients Management API
   description: RESTful API for managing ingredients, stock movements, and dishes – conversion of the console application to a web service (TD5 Refactoring).
   version: 1.0.0
-  contact:
-    name: RA-FANOMEZANA Herimamy Fenohasina
-    email: fenohasinaherimamy@gmail.com
 
 servers:
   - url: http://localhost:8080
